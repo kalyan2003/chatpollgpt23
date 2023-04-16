@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Weather and Pollution Data</title>
+  <script type="text/javascript">
+    // Function to fetch weather data from OpenWeatherMap API
+    async function fetchWeatherData(city) {
+      const apiKey = '8001908ab9c1725ef5083a0bf7f6c443'; // Replace with your OpenWeatherMap API key
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          // Extract longitude and latitude from the weather data
+          const longitude = data.coord.lon;
+          const latitude = data.coord.lat;
+
+          // Fetch pollution data using the latitude and longitude
+          const pollutionData = await fetchPollutionData(latitude, longitude);
+
+          return { longitude, latitude, pollutionData };
+        } else {
+          throw new Error(`Failed to fetch weather data: ${data.message}`);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Function to fetch pollution data from OpenWeatherMap API
+    async function fetchPollutionData(latitude, longitude) {
+      const apiKey = '8001908ab9c1725ef5083a0bf7f6c443'; // Replace with your OpenWeatherMap API key
+      const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok) {
+          // Extract pollution data
+          const aqi = data.list[0].main.aqi;
+          const pm2_5 = data.list[0].components.pm2_5;
+          const pm10 = data.list[0].components.pm10;
+          const so2 = data.list[0].components.so2;
+          const no2 = data.list[0].components.no2;
+          const co = data.list[0].components.co;
+          const o3 = data.list[0].components.o3;
+
+            return { aqi, pm2_5, pm10, so2, no2, co, o3 };
+        } else {
+          throw new Error(`Failed to fetch pollution data: ${data.message}`);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Function to handle form submission
+    function handleSubmit() {
+      const city = document.getElementById('cityInput').value;
+      fetchWeatherData(city)
+        .then(({ longitude, latitude, pollutionData }) => {
+          document.getElementById('result').innerHTML = `Longitude: ${longitude}<br>Latitude: ${latitude}<br>AQI: ${pollutionData.aqi}<br>PM2.5: ${pollutionData.pm2_5}<br>PM10: ${pollutionData.pm10}`;
+        })
+        .catch(error => {
+          console.error(error);
+          document.getElementById('result').innerHTML = 'Error: ' + error.message;
+        });
+    }
+  </script>
+</head>
+
+<body>
+  <h1>Weather and Pollution Data</h1>
+  <form onsubmit="event.preventDefault(); handleSubmit();">
+    <label for="cityInput">City:</label>
+    <input type="text" id="cityInput">
+    <button type="submit">Fetch Data</button>
+  </form>
+  <div id="result"></div>
+</body>
+
+</html>
